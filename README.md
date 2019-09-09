@@ -81,7 +81,62 @@ Note: you could use wget, curl, or whatever you want to download these files...
 #files_to_keep = nodes.dmp, names.dmp, merged.dmp and delnodes.dmp
  rm citations.dmp division.dmp gc.prt gencode.dmp
  ```
- 
+ ______
+
 **Now we should be ready to format the database for use in QIIME. I played around with clumsy ways of doing this, but the fastest and simplest is a script by Christopher Baker named entrez_qiime.py**
+
 See his work here [https://github.com/bakerccm/entrez_qiime]
 
+```BASH{}
+# note that absolute filepaths are necessary or the script may return an error
+
+python enterz_qiime.py -i ABSOLUTE_PATH/NCBI_ITS1_DB.fasta -o ABSOLUTE_OUTPUT_PATH/NCBI_ITS1_Taxonomy.txt -r kingdom,phyllum,class,order,family,genus,species
+```
+
+______
+
+**The entrez_qiime.py script is super fast and easy, but your files will probably need a lot of grooming or QIIME will act very rudely.  Here are the steps that were needed to prepare my files:**
+
+```BASH{}
+### Validate and Tidy up files ###
+
+### Edit output file to include rank IDs (QIIME needs them for some scripts)
+cat NCBI_ITS1_Taxonomy.txt | sed 's/\t/\tk__/' | sed 's/;/>p__/' | sed 's/;/>c__/' | sed 's/;/>o__/' | sed 's/;/>f__/' | sed 's/;/>g__/' | sed 's/;/>s__/' | sed 's/>/;/g' > NCBI_ITS1_QIIME_Taxonomy.txt
+
+### Edit database to single-line fasta format
+awk '/^>/ {printf("\n%s\n",$0);next; } { printf("%s",$0);}  END {printf("\n");}' < NCBI_ITS1_DB.fasta > NCBI_ITS1_QIIME_DB.fasta
+
+### Remove first blank line
+sed -i '/^$/d' NCBI_ITS1_QIIME_DB.fasta
+
+### Remove trailing descriptions after Accession No.
+sed -i 's/ .*//' NCBI_ITS1_QIIME_DB.fasta
+
+### compare read counts in fasta and txt files
+grep -c "^>" NCBI_ITS1_QIIME_DB.fasta
+wc -l NCBI_ITS1_QIIME_Taxonomy.txt
+
+#if numbers are different, there are duplicates introduced by entrez_qiime.py
+
+### if some duplicates may appear in fasta file (i.e., more reads than taxonomy IDs), get lists of Seq/Taxonomy IDs and remove duplicates from fasta file
+
+cut -f 1 NCBI_ITS1_QIIME_Taxonomy.txt > Tax_Names
+grep "^>" NCBI_ITS1_QIIME_DB.fasta | cut -d " " -f 1 | sed 's/>//g' > DB_Names
+sort DB_Names | uniq -d > Duplicated_IDs
+grep -A1 -f Duplicated_IDs NCBI_ITS1_QIIME_DB.fasta | sed '/^--/d' > Duplicated_fastas
+for fn in Duplicated_fastas; do count=$(wc -l <"$fn"); half=$(($count/2 )); head -n $half $fn > add_back; done
+grep -v -f Duplicated_IDs NCBI_ITS1_QIIME_DB.fasta > NCBI_ITS1_QIIME_DB.no.reps.fasta
+cat NCBI_ITS1_QIIME_DB.no.reps.fasta add_back > NCBI_ITS1_QIIME_DB.fasta
+
+### Sort fasta database to same order as taxonomy map
+
+cut -f 1 NCBI_ITS1_QIIME_Taxonomy.txt > IDs_in_order.txt
+while read ID ; do grep -m 1 -A 1 "^>$ID" NCBI_ITS1_QIIME_DB.fasta ; done < IDs_in_order.txt > NCBI_ITS1_QIIME_DB.fasta.sorted &  #This will take quite a long time to run
+```
+
+______
+
+Now these files should be ready to use for OTU Picking just like the UNITE Reference and Taxonomy files!
+You can tailor your NCBI query to find the reads you want and design your own custom database using this same workflow.
+
+**Probably the best use of this workflow is to tailor an NCBI query to pull sequences from likely outgroups in your study and concatenate these onto the ends of the UNITE database files.**
