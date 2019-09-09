@@ -20,7 +20,8 @@ The basic steps to making your own QIIME-compatible database:
 
 **4) Clean up the files and validate them**
 
-The first step is to make sure you have ENTREZ Direct installed on your machine.  This is a tool from NCBI that allows you to query the NCBI database remotely from the command line.
+__________
+**The first step is to make sure you have ENTREZ Direct installed on your machine.  This is a tool from NCBI that allows you to query the NCBI database remotely from the command line.**
 ```BASH{}
 ###  install EDirect on your local machine:  ###
 
@@ -55,3 +56,14 @@ esearch -db nuccore -query "\"\(internal transcribed spacer 1\"[All Fields] AND 
 # this downloads fasta with ALL ncbi seqs of ITS1 between 300:600 bp, that aren't bacterial or "uncultured gut fungi" (416,912 sequences as of Dec 16, 2016) and saves them as s fasta text file called "NCBI_ITS1_DB.fasta"
 #depending on size of query results, this can take some time, so be careful about hangups and make sure your connection is good
 ```
+
+_____
+
+Okay, now since NCBI has all kinds of crazy uncurated data, we need to look for empty sequences before proceeding, as these will cause major problems down the line.  You can find and remove these really quickly with awk:
+
+```BASH{}
+###  Search for and remove any empty sequences ###
+awk 'BEGIN {RS = ">" ; FS = "\n" ; ORS = ""} {if ($2) print ">"$0}' NCBI_ITS1_DB_raw.fasta > NCBI_ITS1_DB.fasta
+```
+
+Now that we have the sequences we want, the second step is to download all of the NCBI names and taxonomic information
