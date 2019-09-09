@@ -11,9 +11,13 @@ One obvious solution is to add some meaningful outgroups to the UNITE database s
 
 I’ll demonstrate one way of making your own customized NCBI database that is compatible with QIIME.  This is just one way of dealing with the shortcomings of the UNITE database, and it may not be best for your data.
 The basic steps to making your own QIIME-compatible database:
+
 **1) Design a query to extract the sequences you want to include in your database from NCBI**
+
 **2) Download all the NCBI names and taxonomy information**
+
 **3) Create a database that links sequence IDs to taxonomic information that QIIME can parse**
+
 **4) Clean up the files and validate them**
 
 The first step is to make sure you have ENTREZ Direct installed on your machine.  This is a tool from NCBI that allows you to query the NCBI database remotely from the command line.
