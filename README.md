@@ -57,13 +57,31 @@ esearch -db nuccore -query "\"\(internal transcribed spacer 1\"[All Fields] AND 
 #depending on size of query results, this can take some time, so be careful about hangups and make sure your connection is good
 ```
 
-_____
-
 Okay, now since NCBI has all kinds of crazy uncurated data, we need to look for empty sequences before proceeding, as these will cause major problems down the line.  You can find and remove these really quickly with awk:
 
 ```BASH{}
 ###  Search for and remove any empty sequences ###
 awk 'BEGIN {RS = ">" ; FS = "\n" ; ORS = ""} {if ($2) print ">"$0}' NCBI_ITS1_DB_raw.fasta > NCBI_ITS1_DB.fasta
 ```
+_____
 
-Now that we have the sequences we want, the second step is to download all of the NCBI names and taxonomic information
+**Now that we have the sequences we want, the second step is to download all of the NCBI names and taxonomic information**
+Note: you could use wget, curl, or whatever you want to download these files...
+```BASH{}
+### Download NCBI names and taxonomy information (check md5sums to ensure proper downloads) ###
+
+#accession_to_taxid
+ ftp ftp://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+ gunzip nucl_gb.accession2taxid.gz
+
+#taxdump
+ ftp ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz
+ tar -zxvf taxdump.tar.gz
+
+#files_to_keep = nodes.dmp, names.dmp, merged.dmp and delnodes.dmp
+ rm citations.dmp division.dmp gc.prt gencode.dmp
+ ```
+ 
+**Now we should be ready to format the database for use in QIIME. I played around with clumsy ways of doing this, but the fastest and simplest is a script by Christopher Baker named entrez_qiime.py**
+See his work here [https://github.com/bakerccm/entrez_qiime]
+
