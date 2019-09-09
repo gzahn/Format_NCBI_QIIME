@@ -17,3 +17,20 @@ The basic steps to making your own QIIME-compatible database:
 4) Clean up the files and validate them
 1) The first step is to make sure you have ENTREZ Direct installed on your machine.  This is a tool from NCBI that allows you to query the NCBI database remotely from the command line.
 
+
+```BASH{}
+###  install EDirect on your local machine:  ###
+
+cd ~
+perl -MNet::FTP -e \
+  '$ftp = new Net::FTP("ftp.ncbi.nlm.nih.gov", Passive => 1);
+   $ftp->login; $ftp->binary;
+   $ftp->get("/entrez/entrezdirect/edirect.zip");'
+unzip -u -q edirect.zip
+rm edirect.zip
+export PATH=$PATH:$HOME/edirect
+./edirect/setup.sh
+
+echo "export PATH=\$PATH:\$HOME/edirect" >> $HOME/.bash_profile
+exec bash
+```
