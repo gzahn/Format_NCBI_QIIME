@@ -39,6 +39,19 @@ exec bash
 ```
 
 
-Now we can design a query that will scour NCBI and pull only the records that we want to include in our database.  There is a slight learning curve to figuring out how to “word” your query, so I recommend going onto the NCBI ENTREZ search page and playing with the filters and search terms to see how to “phrase things.”  Once you have a search you like, you can see the exact search terms in the bottom right of the results page. For my query, I wanted to pull all the “complete” (between 300 and 600 bp) ITS1 reads that didn’t come up as a random unknown gut fungus (There are  LOT of these in NCBI thanks to the daily barrage of gut metagenome papers coming out).
+Now we can design a query that will scour NCBI and pull only the records that we want to include in our database.  There is a slight learning curve to figuring out how to “word” your query, so I recommend going onto the NCBI ENTREZ search page and playing with the filters and search terms to see how to “phrase things.” 
+
+Once you have a search you like, you can see the exact search terms in the bottom right of the results page. For my query, I wanted to pull all the “complete” (between 300 and 600 bp) ITS1 reads that didn’t come up as a random unknown gut fungus (There are  LOT of these in NCBI thanks to the daily barrage of gut metagenome papers coming out).
+
 This search string looks like this:
 (“internal transcribed spacer 1″[All Fields] AND (“300″[SLEN] : “600”[SLEN])) NOT “uncultured Neocallimastigales”[porgn] NOT “bacteria”[Filter]
+
+. . . And to use it in EDirect, it looks like this (note the character escapes before crucial quotes):
+
+```BASH{}
+esearch -db nuccore -query "\"\(internal transcribed spacer 1\"[All Fields] AND \(300[SLEN] : 600[SLEN]\)\) NOT \"uncultured Neocallimastigales\"[porgn] NOT \"bacteria\"[Filter]" \
+ | efetch -format fasta -mode text > ./Desktop/NCBI_ITS1_DB_raw.fasta
+
+# this downloads fasta with ALL ncbi seqs of ITS1 between 300:600 bp, that aren't bacterial or "uncultured gut fungi" (416,912 sequences as of Dec 16, 2016) and saves them as s fasta text file called "NCBI_ITS1_DB.fasta"
+#depending on size of query results, this can take some time, so be careful about hangups and make sure your connection is good
+```
